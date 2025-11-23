@@ -249,12 +249,17 @@ const isWindows = os.platform() === 'win32';
 const command = isWindows ? 'npx' : 'tsx';
 const commandArgs = isWindows ? ['tsx', mainFile, ...args] : [mainFile, ...args];
 
-const child = spawn(command, commandArgs, {
+const spawnOptions = {
     stdio: 'inherit',
     cwd: sourceDir,
-    env: { ...process.env },
-    shell: isWindows
-});
+    env: { ...process.env }
+};
+
+if (isWindows) {
+    spawnOptions.shell = true;
+}
+
+const child = spawn(command, commandArgs, spawnOptions);
 
 child.on('exit', (code) => {
     process.exit(code || 0);
@@ -362,5 +367,6 @@ if ($response -eq 'y' -or $response -eq 'Y') {
     Write-Host "Starting happy..." -ForegroundColor Green
     happy
 }
+
 
 
