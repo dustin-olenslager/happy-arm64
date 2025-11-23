@@ -229,7 +229,7 @@ if (!$BuildSuccessful) {
     }
 
     # Create a wrapper script that runs from source
-        $WrapperContent = @"
+            $WrapperContent = @"
 #!/usr/bin/env node
 // Wrapper to run happy-coder from source on Windows ARM64
 // This is used when the build fails due to Rollup ARM64 issues
@@ -243,23 +243,25 @@ const mainFile = path.join(sourceDir, 'src', 'index.ts');
 
 const args = process.argv.slice(2);
 
-// On Windows, use npx tsx which handles Windows properly
-// npx automatically finds tsx.cmd or tsx.exe
+// On Windows, use cmd.exe to run tsx properly
 const isWindows = os.platform() === 'win32';
-const command = isWindows ? 'npx' : 'tsx';
-const commandArgs = isWindows ? ['tsx', mainFile, ...args] : [mainFile, ...args];
-
-const spawnOptions = {
-    stdio: 'inherit',
-    cwd: sourceDir,
-    env: { ...process.env }
-};
+let command, commandArgs;
 
 if (isWindows) {
-    spawnOptions.shell = true;
+    // Use cmd.exe to run tsx.cmd properly
+    command = 'cmd.exe';
+    commandArgs = ['/c', 'tsx', mainFile, ...args];
+} else {
+    command = 'tsx';
+    commandArgs = [mainFile, ...args];
 }
 
-const child = spawn(command, commandArgs, spawnOptions);
+const child = spawn(command, commandArgs, {
+    stdio: 'inherit',
+    cwd: sourceDir,
+    env: { ...process.env },
+    shell: false
+});
 
 child.on('exit', (code) => {
     process.exit(code || 0);
@@ -367,6 +369,7 @@ if ($response -eq 'y' -or $response -eq 'Y') {
     Write-Host "Starting happy..." -ForegroundColor Green
     happy
 }
+
 
 
 
